@@ -1,0 +1,782 @@
+<!DOCTYPE html>
+<html lang="nl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>BDRC Handinvoer – Hana Bank</title>
+<style>
+:root { --bg:#f4f5f7; --card:#fff; --ink:#1d2430; --muted:#5d6675; --line:#d5d9e0; --accent:#0b5cad; --err:#b3261e; --errbg:#fdecea; --ok:#1e6b3a; --okbg:#e8f4ec; }
+* { box-sizing: border-box; }
+body { margin:0; background:var(--bg); color:var(--ink); font:15px/1.45 "Segoe UI", system-ui, Arial, sans-serif; }
+main { max-width:960px; margin:0 auto; padding:20px 16px 60px; }
+h1 { font-size:22px; margin:0 0 4px; }
+h2 { font-size:17px; margin:0 0 12px; }
+.sub { color:var(--muted); margin:0 0 18px; }
+section.card { background:var(--card); border:1px solid var(--line); border-radius:8px; padding:16px 18px; margin-bottom:16px; }
+.grid { display:grid; grid-template-columns:repeat(auto-fit, minmax(200px, 1fr)); gap:10px 14px; }
+.fld { display:flex; flex-direction:column; min-width:0; }
+.fld.wide { grid-column:1 / -1; }
+label { font-size:13px; color:var(--muted); margin-bottom:3px; }
+input, select { font:inherit; padding:6px 8px; border:1px solid #aab1bd; border-radius:5px; background:#fff; color:var(--ink); min-width:0; width:100%; }
+input:focus, select:focus { outline:2px solid #9cc4ec; border-color:var(--accent); }
+.err { color:var(--err); font-size:13px; margin-top:3px; }
+.err:empty { display:none; }
+.fld.has-err input, .fld.has-err select { border-color:var(--err); background:var(--errbg); }
+.secerr { color:var(--err); font-size:14px; margin:6px 0; }
+.secerr:empty { display:none; }
+.blk { border:1px solid var(--line); border-radius:6px; padding:12px; margin-bottom:12px; background:#fbfbfc; }
+.blk-h { display:flex; justify-content:space-between; align-items:center; margin-bottom:8px; }
+button { font:inherit; padding:7px 14px; border-radius:5px; border:1px solid var(--accent); background:#fff; color:var(--accent); cursor:pointer; }
+button.primary { background:var(--accent); color:#fff; }
+button.link { border:none; background:none; color:var(--err); padding:2px 4px; }
+button:hover { filter:brightness(0.95); }
+.actions { display:flex; gap:10px; flex-wrap:wrap; margin-top:6px; }
+.hide { display:none !important; }
+.hint { font-size:12px; color:var(--muted); }
+#summary { background:var(--errbg); border:1px solid var(--err); color:var(--err); border-radius:6px; padding:10px 14px; margin-bottom:16px; }
+#summary ul { margin:6px 0 0 18px; padding:0; }
+#result .okbar { background:var(--okbg); border:1px solid var(--ok); color:var(--ok); border-radius:6px; padding:8px 12px; margin-bottom:12px; }
+table.ov { border-collapse:collapse; width:100%; font-size:12.5px; margin-bottom:12px; }
+table.ov th, table.ov td { border:1px solid var(--line); padding:3px 6px; text-align:left; white-space:nowrap; }
+table.ov th { background:#eef1f5; }
+.scroll { overflow-x:auto; }
+textarea { width:100%; height:300px; font:12.5px/1.4 Consolas, "Courier New", monospace; padding:8px; border:1px solid #aab1bd; border-radius:5px; }
+</style>
+</head>
+<body>
+<main>
+<h1>BDRC Handinvoer – nieuwe klant</h1>
+<p class="sub">Vul de gegevens in, klik op “SQL maken” en voer het gedownloade .sql-bestand uit in SSMS. Er wordt niets opgeslagen of verstuurd; alles blijft in deze pagina.</p>
+
+<div id="summary" class="hide" role="alert"></div>
+
+<form id="form" autocomplete="off" novalidate>
+
+<section class="card" data-sec="meta">
+  <h2>Algemeen</h2>
+  <div class="grid">
+    <div class="fld"><label for="f-door">Ingevoerd door (uw naam)</label><input id="f-door" data-f="door" type="text"><div class="err"></div></div>
+    <div class="fld"><label for="f-db">Database BDRC (MyletteBDRC; Test_BDRC om te testen)</label><input id="f-db" data-f="db" type="text" value="MyletteBDRC"><div class="err"></div></div>
+  </div>
+</section>
+
+<section class="card" data-sec="customer">
+  <h2>Klant</h2>
+  <div class="grid">
+    <div class="fld"><label>Klanttype</label>
+      <select data-f="type"><option value="NaturalPerson">Natuurlijk persoon</option><option value="LegalEntity">Rechtspersoon</option></select><div class="err"></div></div>
+    <div class="fld"><label>Klantnummer (GEUNL01 + 9 cijfers)</label><input data-f="nr" type="text" placeholder="GEUNL01123456789"><div class="err"></div></div>
+  </div>
+  <div class="grid np-only" style="margin-top:10px">
+    <div class="fld"><label>BSN</label><input data-f="bsn" type="text" inputmode="numeric"><div class="err"></div></div>
+    <div class="fld"><label>Geboortedatum</label><input data-f="dob" type="date"><div class="err"></div></div>
+    <div class="fld"><label>Eerste voorletter</label><input data-f="fi" type="text"><div class="err"></div></div>
+    <div class="fld"><label>Overige voorletters (zonder punten)</label><input data-f="oi" type="text"><div class="err"></div></div>
+    <div class="fld"><label>Voornaam</label><input data-f="fn" type="text"><div class="err"></div></div>
+    <div class="fld"><label>Tussenvoegsel</label><input data-f="prefix" type="text"><div class="err"></div></div>
+    <div class="fld"><label>Achternaam</label><input data-f="ln" type="text"><div class="err"></div></div>
+  </div>
+  <div class="grid le-only hide" style="margin-top:10px">
+    <div class="fld"><label>KvK-nummer</label><input data-f="kvk" type="text"><div class="err"></div></div>
+    <div class="fld"><label>Organisatienaam</label><input data-f="org" type="text"><div class="err"></div></div>
+  </div>
+</section>
+
+<section class="card" data-secwrap="addresses">
+  <h2>Adressen</h2>
+  <div class="secerr" data-secerr="addresses"></div>
+  <div id="addresses"></div>
+  <button type="button" id="add-address">+ Adres toevoegen</button>
+</section>
+
+<section class="card" data-secwrap="accounts">
+  <h2>Rekeningen</h2>
+  <div class="secerr" data-secerr="accounts"></div>
+  <div id="accounts"></div>
+  <button type="button" id="add-account">+ Rekening toevoegen</button>
+</section>
+
+<section class="card hide" id="ubo-card" data-secwrap="ubos">
+  <h2>UBO’s (uiteindelijk belanghebbenden)</h2>
+  <p class="hint">Verplicht bij een rechtspersoon die rekeninghouder is.</p>
+  <div class="secerr" data-secerr="ubos"></div>
+  <div id="ubos"></div>
+  <button type="button" id="add-ubo">+ UBO toevoegen</button>
+</section>
+
+<div class="actions">
+  <button type="submit" class="primary" id="make">SQL maken</button>
+  <button type="button" id="reset">Nieuw formulier</button>
+</div>
+</form>
+
+<section class="card hide" id="result" style="margin-top:20px">
+  <h2>Resultaat</h2>
+  <div class="okbar" id="okbar"></div>
+  <div id="overview" class="scroll"></div>
+  <div class="actions" style="margin-bottom:10px">
+    <button type="button" class="primary" id="download">SQL-bestand downloaden</button>
+    <button type="button" id="copy">SQL kopiëren</button>
+    <span id="copied" class="hint"></span>
+  </div>
+  <textarea id="sqltext" readonly spellcheck="false"></textarea>
+</section>
+</main>
+
+<script id="core">
+/* ===== KERN: validatie en SQL-generatie. Geen DOM; wordt ook door testdata/test.js getest. ===== */
+var Core = (function () {
+  'use strict';
+
+  var COUNTRIES = ('NL AD AE AF AG AI AL AM AO AQ AR AS AT AU AW AX AZ BA BB BD BE BF BG BH BI BJ BL BM BN BO BQ BR BS BT BV BW BY BZ ' +
+    'CA CC CD CF CG CH CI CK CL CM CN CO CR CU CV CW CX CY CZ DE DJ DK DM DO DZ EC EE EG EH ER ES ET FI FJ FK FM FO FR ' +
+    'GA GB GD GE GF GG GH GI GL GM GN GP GQ GR GS GT GU GW GY HK HM HN HR HT HU ID IE IL IM IN IO IQ IR IS IT JE JM JO JP ' +
+    'KE KG KH KI KM KN KP KR KW KY KZ LA LB LC LI LK LR LS LT LU LV LY MA MC MD ME MF MG MH MK ML MM MN MO MP MQ MR MS MT MU MV MW MX MY MZ ' +
+    'NA NC NE NF NG NI NO NP NR NU NZ OM PA PE PF PG PH PK PL PM PN PR PS PT PW PY QA RE RO RS RU RW ' +
+    'SA SB SC SD SE SG SH SI SJ SK SL SM SN SO SR SS ST SV SX SY SZ TC TD TF TG TH TJ TK TL TM TN TO TR TT TV TW TZ ' +
+    'UA UG UM US UY UZ VA VC VE VG VI VN VU WF WS YE YT ZA ZM ZW').split(' ');
+
+  var CURRENCIES = ('EUR USD GBP AED AFN ALL AMD ANG AOA ARS AUD AWG AZN BAM BBD BDT BGN BHD BIF BMD BND BOB BRL BSD BTN BWP BYN BZD ' +
+    'CAD CDF CHF CLP CNY COP CRC CUP CVE CZK DJF DKK DOP DZD EGP ERN ETB FJD FKP GEL GHS GIP GMD GNF GTQ GYD HKD HNL HTG HUF ' +
+    'IDR ILS INR IQD IRR ISK JMD JOD JPY KES KGS KHR KMF KPW KRW KWD KYD KZT LAK LBP LKR LRD LSL LYD MAD MDL MGA MKD MMK MNT MOP MRU MUR MVR MWK MXN MYR MZN ' +
+    'NAD NGN NIO NOK NPR NZD OMR PAB PEN PGK PHP PKR PLN PYG QAR RON RSD RUB RWF SAR SBD SCR SDG SEK SGD SHP SLE SOS SRD SSP STN SYP SZL ' +
+    'THB TJS TMT TND TOP TRY TTD TWD TZS UAH UGX UYU UZS VES VND VUV WST XAF XCD XOF XPF YER ZAR ZMW ZWL').split(' ');
+
+  var PRODUCT_TYPES = ['Betaalrekening', 'Spaarrekening'];
+  var STATUSES = ['Active', 'Frozen', 'Discontinued'];
+  var ROLES = ['AccountHolder', 'AuthorizedRepresentative'];
+  var RELATIONSHIPS = ['Authorized NP', 'Administrator', 'Guardian'];
+  var ADDRESS_TYPES = ['Home', 'Postal', 'RegisteredOffice'];
+
+  var CUST_RE = /^GEUNL01\d{9}$/;
+  var DB_RE = /^[A-Za-z_][A-Za-z0-9_]{0,127}$/;
+
+  var MAX = {
+    door: 100, nr: 50, bsn: 9, fi: 1, oi: 50, fn: 50, prefix: 10, ln: 200, kvk: 200, org: 200,
+    acc_nr: 34, contract: 200, name: 200, relationship: 200,
+    street: 100, hn: 15, suffix: 10, pc: 10, pobox: 20, city: 100, other: 500
+  };
+
+  /* ---------- hulpfuncties ---------- */
+  function str(v) { return (v === null || v === undefined) ? '' : String(v).replace(/[\r\n\t]+/g, ' ').trim(); }
+  function p2(n) { return (n < 10 ? '0' : '') + n; }
+  function ymd(d) { return d.getFullYear() + '-' + p2(d.getMonth() + 1) + '-' + p2(d.getDate()); }
+  function isDate(s) {
+    var m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(s);
+    if (!m) return false;
+    var y = +m[1], mo = +m[2], d = +m[3], dt = new Date(Date.UTC(y, mo - 1, d));
+    return y >= 1900 && dt.getUTCFullYear() === y && dt.getUTCMonth() === mo - 1 && dt.getUTCDate() === d;
+  }
+  function inList(list, v) { return list.indexOf(v) !== -1; }
+
+  // Elfproef, gelijk aan dbo.isValidBSN: 9*A + 8*B + ... + 2*H - 1*I deelbaar door 11.
+  function validBsn(s) {
+    if (!/^\d{8,9}$/.test(s)) return false;
+    if (s.length === 8) s = '0' + s;
+    var sum = 0;
+    for (var i = 0; i < 8; i++) sum += (9 - i) * +s.charAt(i);
+    sum -= +s.charAt(8);
+    return sum % 11 === 0 && !/^0+$/.test(s);
+  }
+
+  // IBAN mod-97; Nederlands: NL99XXXX9999999999.
+  function validIban(s) {
+    if (!/^[A-Z]{2}\d{2}[A-Z0-9]{11,30}$/.test(s)) return false;
+    if (s.slice(0, 2) === 'NL' && !/^NL\d{2}[A-Z]{4}\d{10}$/.test(s)) return false;
+    var r = s.slice(4) + s.slice(0, 4), rem = 0;
+    for (var i = 0; i < r.length; i++) {
+      var c = r.charCodeAt(i), v = c >= 65 ? String(c - 55) : r.charAt(i);
+      for (var j = 0; j < v.length; j++) rem = (rem * 10 + +v.charAt(j)) % 97;
+    }
+    return rem === 1;
+  }
+
+  /* ---------- normaliseren ---------- */
+  function normAddr(a, type) {
+    var o = {};
+    ['type', 'street', 'hn', 'suffix', 'pc', 'city', 'country', 'pobox', 'other', 'start'].forEach(function (k) { o[k] = str(a && a[k]); });
+    o.country = o.country.toUpperCase();
+    if (o.country === 'NL') o.pc = o.pc.toUpperCase().replace(/\s+/g, '');
+    return o;
+  }
+  function normPerson(src, o) {
+    ['bsn', 'dob', 'fi', 'oi', 'fn', 'prefix', 'ln'].forEach(function (k) { o[k] = str(src[k]); });
+    o.bsn = o.bsn.replace(/\s+/g, '');
+  }
+
+  function prepare(raw) {
+    var m = { db: str(raw.db), door: str(raw.door), customer: {}, addresses: [], accounts: [], ubos: [] };
+    var c = raw.customer || {}, mc = m.customer;
+    mc.type = str(c.type); mc.nr = str(c.nr).toUpperCase();
+    if (mc.type === 'LegalEntity') { mc.kvk = str(c.kvk); mc.org = str(c.org); }
+    else { normPerson(c, mc); }
+    m.addresses = (raw.addresses || []).map(function (a) { return normAddr(a); });
+    m.accounts = (raw.accounts || []).map(function (a) {
+      var o = { mode: str(a.mode), nr: str(a.nr).toUpperCase().replace(/\s+/g, ''), ptype: str(a.ptype), role: str(a.role),
+                relationship: '', roleStart: str(a.roleStart) };
+      if (o.role === 'AuthorizedRepresentative') o.relationship = str(a.relationship);
+      if (o.mode === 'new') {
+        o.status = str(a.status); o.contract = str(a.contract); o.name = str(a.name); o.opening = str(a.opening);
+        o.closing = str(a.closing); o.currency = str(a.currency).toUpperCase();
+        if (!o.roleStart) o.roleStart = o.opening;
+      }
+      return o;
+    });
+    m.ubos = (raw.ubos || []).map(function (u) {
+      var o = { mode: str(u.mode), nr: str(u.nr).toUpperCase(), start: str(u.start) };
+      if (o.mode === 'new') { normPerson(u, o); o.addr = normAddr(u.addr || {}); }
+      return o;
+    });
+    return m;
+  }
+
+  /* ---------- validatie ---------- */
+  function validate(m, now) {
+    var E = [];
+    var today = ymd(now || new Date());
+    function err(path, msg) { E.push({ path: path, msg: msg }); }
+    function len(path, v, max, label) { if (v.length > max) err(path, label + ' is te lang (maximaal ' + max + ' tekens, nu ' + v.length + ').'); }
+    function req(path, v, label) { if (!v) { err(path, label + ' is verplicht.'); return false; } return true; }
+
+    // geen veld met de tekst NULL
+    (function walk(o, path) {
+      if (typeof o === 'string') { if (/(^|[^A-Za-z0-9_])null([^A-Za-z0-9_]|$)/i.test(o)) err(path, 'Het veld mag de tekst NULL niet bevatten.'); }
+      else if (o && typeof o === 'object') Object.keys(o).forEach(function (k) { walk(o[k], path ? path + '.' + k : k); });
+    })(m, '');
+
+    if (req('door', m.door, 'Uw naam')) len('door', m.door, MAX.door, 'Uw naam');
+    if (!DB_RE.test(m.db)) err('db', 'Geef een geldige databasenaam op (letters, cijfers en underscore).');
+
+    var c = m.customer, np = c.type === 'NaturalPerson', le = c.type === 'LegalEntity';
+    if (!np && !le) err('customer.type', 'Kies een klanttype.');
+    if (req('customer.nr', c.nr, 'Klantnummer')) {
+      if (!CUST_RE.test(c.nr)) err('customer.nr', 'Klantnummer moet GEUNL01 gevolgd door 9 cijfers zijn.');
+    }
+
+    var holder = m.accounts.some(function (a) { return a.role === 'AccountHolder'; });
+    var nlHome = m.addresses.some(function (a) { return a.type === 'Home' && a.country === 'NL'; });
+
+    function person(p, path, bsnRequired) {
+      if (p.bsn) {
+        if (!/^\d+$/.test(p.bsn)) err(path + 'bsn', 'BSN mag alleen cijfers bevatten.');
+        else if (!/^\d{8,9}$/.test(p.bsn)) err(path + 'bsn', 'BSN heeft 8 of 9 cijfers.');
+        else if (!validBsn(p.bsn)) err(path + 'bsn', 'BSN voldoet niet aan de elfproef.');
+      } else if (bsnRequired) err(path + 'bsn', 'BSN is verplicht voor een rekeninghouder met een Nederlands woonadres.');
+      if (p.dob) {
+        if (!isDate(p.dob)) err(path + 'dob', 'Geboortedatum is geen geldige datum.');
+        else if (p.dob > today) err(path + 'dob', 'Geboortedatum mag niet in de toekomst liggen.');
+      }
+      if (p.fi && !/^\p{L}$/u.test(p.fi)) err(path + 'fi', 'Eerste voorletter moet precies 1 letter zijn (geen punt of spatie).');
+      if (p.oi) {
+        if (!/^\p{L}+$/u.test(p.oi)) err(path + 'oi', 'Overige voorletters mogen alleen letters bevatten (geen punten of spaties).');
+        else if (!p.fi) err(path + 'fi', 'Vul de eerste voorletter in als er overige voorletters zijn.');
+        len(path + 'oi', p.oi, MAX.oi, 'Overige voorletters');
+      }
+      len(path + 'fn', p.fn, MAX.fn, 'Voornaam');
+      len(path + 'prefix', p.prefix, MAX.prefix, 'Tussenvoegsel');
+      if (req(path + 'ln', p.ln, 'Achternaam')) len(path + 'ln', p.ln, MAX.ln, 'Achternaam');
+    }
+
+    function address(a, path, isLE, allowed) {
+      if (!inList(allowed, a.type)) err(path + 'type', 'Kies een adrestype.');
+      else if (isLE && a.type === 'Home') err(path + 'type', 'Een rechtspersoon heeft geen Home-adres.');
+      else if (!isLE && a.type === 'RegisteredOffice') err(path + 'type', 'RegisteredOffice is alleen voor rechtspersonen.');
+      if (!inList(COUNTRIES, a.country)) err(path + 'country', 'Kies een geldig land (ISO 3166-1 alpha-2).');
+      if (a.street && a.pobox) err(path + 'pobox', 'Vul straat óf postbus in, niet allebei.');
+      if (!a.street && !a.pobox && !a.other) err(path + 'street', 'Vul een straat, een postbus of overige adresgegevens in.');
+      if (/^postbus/i.test(a.pobox)) err(path + 'pobox', 'Vul het postbusnummer in zonder het woord “Postbus”.');
+      len(path + 'street', a.street, MAX.street, 'Straat'); len(path + 'hn', a.hn, MAX.hn, 'Huisnummer');
+      len(path + 'suffix', a.suffix, MAX.suffix, 'Toevoeging'); len(path + 'pc', a.pc, MAX.pc, 'Postcode');
+      len(path + 'pobox', a.pobox, MAX.pobox, 'Postbus'); len(path + 'city', a.city, MAX.city, 'Plaats');
+      len(path + 'other', a.other, MAX.other, 'Overige adresgegevens');
+      if (a.country === 'NL') {
+        if (a.street) {
+          req(path + 'hn', a.hn, 'Huisnummer'); req(path + 'pc', a.pc, 'Postcode'); req(path + 'city', a.city, 'Plaats');
+        }
+        if (a.pc && !/^[1-9]\d{3}[A-Z]{2}$/.test(a.pc)) err(path + 'pc', 'Postcode moet het formaat 1234AB hebben.');
+      }
+      if (a.start && !isDate(a.start)) err(path + 'start', 'Startdatum is geen geldige datum.');
+    }
+
+    if (np) {
+      person(c, 'customer.', holder && nlHome);
+    } else if (le) {
+      if (req('customer.kvk', c.kvk, 'KvK-nummer')) len('customer.kvk', c.kvk, MAX.kvk, 'KvK-nummer');
+      if (req('customer.org', c.org, 'Organisatienaam')) len('customer.org', c.org, MAX.org, 'Organisatienaam');
+    }
+
+    // adressen
+    var seenType = {};
+    m.addresses.forEach(function (a, i) {
+      address(a, 'addresses.' + i + '.', le, ADDRESS_TYPES);
+      if (a.type) { if (seenType[a.type]) err('addresses.' + i + '.type', 'Dit adrestype is al ingevoerd.'); seenType[a.type] = true; }
+    });
+    if (np && holder && !seenType.Home) err('addresses', 'Een natuurlijk persoon die rekeninghouder is heeft een Home-adres nodig (voor verifyaccount).');
+
+    // rekeningen
+    if (!m.accounts.length) err('accounts', 'Voer minimaal één rekening in.');
+    var newKeys = {}, exKeys = {};
+    m.accounts.forEach(function (a, i) {
+      var p = 'accounts.' + i + '.';
+      if (a.mode !== 'new' && a.mode !== 'existing') err(p + 'mode', 'Kies nieuw of bestaand.');
+      if (req(p + 'nr', a.nr, 'Rekeningnummer')) {
+        if (!validIban(a.nr)) err(p + 'nr', a.nr.slice(0, 2) === 'NL' ? 'Geen geldig Nederlands IBAN (formaat NL99XXXX9999999999, controlegetal mod-97).' : 'Geen geldig IBAN (controlegetal mod-97).');
+        len(p + 'nr', a.nr, MAX.acc_nr, 'Rekeningnummer');
+      }
+      if (!inList(PRODUCT_TYPES, a.ptype)) err(p + 'ptype', 'Kies Betaalrekening of Spaarrekening.');
+      if (!inList(ROLES, a.role)) err(p + 'role', 'Kies een rol.');
+      if (a.role === 'AuthorizedRepresentative') {
+        if (!inList(RELATIONSHIPS, a.relationship)) err(p + 'relationship', 'Kies de relatie van de gemachtigde.');
+        if (a.mode === 'new') err(p + 'role', 'Een nieuwe rekening heeft in dit formulier de klant als AccountHolder nodig.');
+      }
+      if (a.roleStart && !isDate(a.roleStart)) err(p + 'roleStart', 'Startdatum van de rol is geen geldige datum.');
+      if (a.mode === 'new') {
+        if (!inList(STATUSES, a.status)) err(p + 'status', 'Kies een status.');
+        len(p + 'contract', a.contract, MAX.contract, 'Contractpartij'); len(p + 'name', a.name, MAX.name, 'Tenaamstelling');
+        if (!inList(CURRENCIES, a.currency)) err(p + 'currency', 'Kies een geldige valuta (ISO 4217).');
+        if (req(p + 'opening', a.opening, 'Openingsdatum') && !isDate(a.opening)) err(p + 'opening', 'Openingsdatum is geen geldige datum.');
+        if (a.status === 'Discontinued') {
+          if (req(p + 'closing', a.closing, 'Sluitingsdatum')) {
+            if (!isDate(a.closing)) err(p + 'closing', 'Sluitingsdatum is geen geldige datum.');
+            else if (isDate(a.opening) && a.closing === a.opening) err(p + 'closing', 'Openings- en sluitingsdatum mogen niet gelijk zijn.');
+            else if (isDate(a.opening) && a.closing < a.opening) err(p + 'closing', 'Sluitingsdatum ligt vóór de openingsdatum.');
+          }
+        } else if (a.closing) err(p + 'closing', 'Een rekening met status ' + a.status + ' heeft geen sluitingsdatum.');
+        var kn = a.nr + '|' + a.ptype + '|' + a.currency;
+        if (newKeys[kn]) err(p + 'nr', 'Deze rekening (zelfde nummer, type en valuta) is al ingevoerd.');
+        newKeys[kn] = true;
+      } else if (a.mode === 'existing') {
+        var ke = a.nr + '|' + a.ptype;
+        if (exKeys[ke]) err(p + 'nr', 'Deze rekening is al ingevoerd.');
+        exKeys[ke] = true;
+      }
+    });
+    m.accounts.forEach(function (a, i) {
+      if (a.mode === 'existing' && a.nr && Object.keys(newKeys).some(function (k) { return k.indexOf(a.nr + '|' + a.ptype + '|') === 0; }))
+        err('accounts.' + i + '.nr', 'Dit rekeningnummer staat ook als nieuwe rekening in het formulier.');
+    });
+
+    // UBO's
+    if (le && holder && !m.ubos.length) err('ubos', 'Een rechtspersoon die rekeninghouder is heeft minimaal één UBO nodig.');
+    if (!le && m.ubos.length) err('ubos', 'UBO’s zijn alleen voor rechtspersonen.');
+    if (le && !holder && m.ubos.length) err('ubos', 'UBO’s zijn alleen nodig bij een rechtspersoon die rekeninghouder is.');
+    var seenUbo = {};
+    m.ubos.forEach(function (u, i) {
+      var p = 'ubos.' + i + '.';
+      if (u.mode !== 'new' && u.mode !== 'existing') err(p + 'mode', 'Kies bestaande klant of nieuwe persoon.');
+      if (req(p + 'nr', u.nr, 'Klantnummer van de UBO')) {
+        if (!CUST_RE.test(u.nr)) err(p + 'nr', 'Klantnummer moet GEUNL01 gevolgd door 9 cijfers zijn.');
+        else if (u.nr === c.nr) err(p + 'nr', 'De UBO kan niet dezelfde klant zijn als de rechtspersoon.');
+        else if (seenUbo[u.nr]) err(p + 'nr', 'Deze UBO is al ingevoerd.');
+        seenUbo[u.nr] = true;
+      }
+      if (u.start && !isDate(u.start)) err(p + 'start', 'Startdatum is geen geldige datum.');
+      if (u.mode === 'new') {
+        person(u, p, false);
+        address(u.addr, p + 'addr.', false, ['Home', 'Postal']);
+      }
+    });
+
+    return E;
+  }
+
+  /* ---------- rijen en SQL ---------- */
+  var COLS = {
+    Product: ['Product_number', 'Product_type', 'Status', 'Contract_party', 'Account_name', 'Opening_date', 'Closing_Date', 'Account_currency'],
+    Customer: ['Customer_number', 'Customer_type', 'Product_number', 'Product_type', 'Role_type', 'Relationship', 'Role_start_date', 'Role_end_date',
+               'Citizen_service_number', 'Date_of_birth', 'First_initial', 'Other_initials', 'First_name', 'Last_name', 'Last_name_prefix',
+               'Chamber_of_commerce_number', 'Organisation_name'],
+    Address: ['Customer_number', 'Address_type', 'Start_date', 'End_date', 'Street', 'House_number', 'House_number_suffix', 'Postal_code',
+              'PO_box', 'City', 'Other_address_data', 'Country'],
+    Relation: ['Customer_number', 'Relationship_type', 'Related_item_number', 'Related_item_type', 'Start_date', 'End_date']
+  };
+  var DATECOLS = { Role_start_date: 1, Role_end_date: 1, Date_of_birth: 1, Opening_date: 1, Closing_Date: 1, Start_date: 1, End_date: 1 };
+
+  function stamp(now) {
+    return now.getFullYear() + p2(now.getMonth() + 1) + p2(now.getDate()) + '-' + p2(now.getHours()) + p2(now.getMinutes()) + p2(now.getSeconds());
+  }
+  function fileName(m, now) { return 'handinvoer_' + m.customer.nr + '_' + stamp(now) + '.sql'; }
+
+  function buildRows(m, file) {
+    var rows = { Product: [], Customer: [], Address: [], Relation: [] };
+    function add(t, vals) {
+      var o = {};
+      COLS[t].forEach(function (k) { var v = vals[k]; o[k] = (v === undefined || v === null || v === '') ? null : v; });
+      o.Ingevoerd_door = m.door; o.Scriptbestand = file;
+      rows[t].push(o);
+    }
+    function personCols(p) {
+      return { Citizen_service_number: p.bsn, Date_of_birth: p.dob, First_initial: p.fi, Other_initials: p.oi, First_name: p.fn, Last_name: p.ln, Last_name_prefix: p.prefix };
+    }
+    function addrRow(nr, a) {
+      add('Address', { Customer_number: nr, Address_type: a.type, Start_date: a.start, Street: a.street, House_number: a.hn, House_number_suffix: a.suffix,
+                       Postal_code: a.pc, PO_box: a.pobox, City: a.city, Other_address_data: a.other, Country: a.country });
+    }
+    var c = m.customer, base = { Customer_number: c.nr, Customer_type: c.type };
+    var cust = c.type === 'LegalEntity' ? { Chamber_of_commerce_number: c.kvk, Organisation_name: c.org } : personCols(c);
+
+    m.accounts.forEach(function (a) {
+      if (a.mode === 'new') {
+        add('Product', { Product_number: a.nr, Product_type: a.ptype, Status: a.status, Contract_party: a.contract, Account_name: a.name,
+                         Opening_date: a.opening, Closing_Date: a.closing, Account_currency: a.currency });
+      }
+    });
+    var seen = {};
+    m.accounts.forEach(function (a) {
+      var k = a.nr + '|' + a.ptype + '|' + a.role;
+      if (seen[k]) return; seen[k] = true;
+      var v = {}, x;
+      for (x in base) v[x] = base[x];
+      for (x in cust) v[x] = cust[x];
+      v.Product_number = a.nr; v.Product_type = a.ptype; v.Role_type = a.role;
+      v.Relationship = a.relationship; v.Role_start_date = a.roleStart;
+      add('Customer', v);
+    });
+    m.addresses.forEach(function (a) { addrRow(c.nr, a); });
+    m.ubos.forEach(function (u) {
+      if (u.mode === 'new') {
+        var v = { Customer_number: u.nr, Customer_type: 'NaturalPerson' }, x, pc = personCols(u);
+        for (x in pc) v[x] = pc[x];
+        add('Customer', v);
+        addrRow(u.nr, u.addr);
+      }
+      add('Relation', { Customer_number: u.nr, Relationship_type: 'UBO', Related_item_number: c.nr, Related_item_type: 'LegalEntity', Start_date: u.start });
+    });
+    return rows;
+  }
+
+  function lit(col, v) {
+    if (v === null) return 'NULL';
+    if (DATECOLS[col]) return "CONVERT(date, '" + v + "', 23)";
+    return "N'" + String(v).replace(/'/g, "''") + "'";
+  }
+  function q(v) { return "N'" + String(v).replace(/'/g, "''") + "'"; }
+
+  function generate(m, now) {
+    now = now || new Date();
+    var file = fileName(m, now);
+    var rows = buildRows(m, file);
+    var db = '[' + m.db + ']';
+    var L = [];
+    function comment(s) { return String(s).replace(/[\r\n]+/g, ' '); }
+
+    L.push('-- Handinvoer BDRC – ' + comment(m.customer.nr) + ' – ingevoerd door ' + comment(m.door) + ' op ' + ymd(now) + ' ' + p2(now.getHours()) + ':' + p2(now.getMinutes()) + ':' + p2(now.getSeconds()));
+    L.push('-- Bestand: ' + file);
+    L.push('USE BDRC_Handinvoer;');
+    L.push('SET XACT_ABORT ON;');
+    L.push('SET NOCOUNT ON;');
+    L.push('BEGIN TRANSACTION;');
+    L.push('');
+    L.push('-- Controles (elke controle stopt het script met een melding en draait alles terug)');
+
+    function throwIf(cond, msg) { L.push('IF ' + cond); L.push("    THROW 50001, " + q(msg) + ', 1;'); }
+    function inEither(table, where) {
+      return 'EXISTS (SELECT 1 FROM dbo.' + table + ' WHERE ' + where + ')\n   OR EXISTS (SELECT 1 FROM ' + db + '.dbo.t_stg_' + table + ' WHERE ' + where + ')';
+    }
+    function notInEither(table, where) {
+      return 'NOT EXISTS (SELECT 1 FROM dbo.' + table + ' WHERE ' + where + ')\n   AND NOT EXISTS (SELECT 1 FROM ' + db + '.dbo.t_stg_' + table + ' WHERE ' + where + ')';
+    }
+    function newCustomer(nr) { throwIf(inEither('Customer', 'Customer_number = ' + q(nr)), 'Klantnummer ' + nr + ' bestaat al.'); }
+
+    newCustomer(m.customer.nr);
+    var doneProd = {};
+    m.accounts.forEach(function (a) {
+      var pw = 'Product_number = ' + q(a.nr) + ' AND Product_type = ' + q(a.ptype);
+      var k = a.mode + '|' + a.nr + '|' + a.ptype;
+      if (!doneProd[k]) {
+        doneProd[k] = true;
+        if (a.mode === 'new') throwIf(inEither('Product', pw), 'Rekening ' + a.nr + ' (' + a.ptype + ') bestaat al.');
+        else throwIf(notInEither('Product', pw), 'Bestaande rekening ' + a.nr + ' (' + a.ptype + ') is niet gevonden.');
+      }
+      if (a.mode === 'existing' && a.role !== 'AccountHolder') {
+        throwIf(notInEither('Customer', pw + " AND Role_type = N'AccountHolder'"), 'Rekening ' + a.nr + ' (' + a.ptype + ') heeft nog geen AccountHolder.');
+      }
+    });
+    m.ubos.forEach(function (u) {
+      if (u.mode === 'new') newCustomer(u.nr);
+      else throwIf(notInEither('Customer', 'Customer_number = ' + q(u.nr)), 'UBO-klant ' + u.nr + ' is niet gevonden.');
+    });
+    L.push('');
+
+    function inserts(t, label) {
+      if (!rows[t].length) return;
+      L.push('-- ' + label);
+      var cols = COLS[t].concat(['Ingevoerd_door', 'Scriptbestand']);
+      rows[t].forEach(function (r) {
+        L.push('INSERT INTO dbo.' + t + ' (' + cols.join(', ') + ')');
+        L.push('VALUES (' + cols.map(function (k) { return lit(k, r[k]); }).join(', ') + ');');
+      });
+      L.push('');
+    }
+    inserts('Product', 'Rekeningen');
+    inserts('Customer', 'Klantregels');
+    inserts('Address', 'Adressen');
+    inserts('Relation', 'UBO-relaties');
+
+    L.push('COMMIT TRANSACTION;');
+    L.push("PRINT 'Klaar: " + rows.Customer.length + ' klantregels, ' + rows.Product.length + ' rekeningen, ' + rows.Address.length + ' adressen, ' + rows.Relation.length + " UBO-relaties toegevoegd.';");
+
+    return { sql: (L.join('\n') + '\n').replace(/\r?\n/g, '\r\n'), file: file, rows: rows, columns: COLS };
+  }
+
+  return {
+    COUNTRIES: COUNTRIES, CURRENCIES: CURRENCIES, PRODUCT_TYPES: PRODUCT_TYPES, STATUSES: STATUSES, ROLES: ROLES,
+    RELATIONSHIPS: RELATIONSHIPS, ADDRESS_TYPES: ADDRESS_TYPES,
+    prepare: prepare, validate: validate, generate: generate, validBsn: validBsn, validIban: validIban, isDate: isDate
+  };
+})();
+</script>
+
+<script>
+/* ===== UI ===== */
+(function () {
+  'use strict';
+  var $ = function (s, r) { return (r || document).querySelector(s); };
+  var $$ = function (s, r) { return Array.prototype.slice.call((r || document).querySelectorAll(s)); };
+  var esc = function (s) { return String(s).replace(/[&<>"]/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]; }); };
+
+  var form = $('#form'), attempted = false, last = null;
+
+  /* ---- keuzelijsten ---- */
+  function names(type) { try { return new Intl.DisplayNames(['nl'], { type: type }); } catch (e) { return null; } }
+  var cn = names('region'), cu = names('currency');
+  function nm(dn, code) { try { return dn ? dn.of(code) : code; } catch (e) { return code; } }
+  function opts(list, labelFn, sel) {
+    return list.map(function (v) { return '<option value="' + esc(v) + '"' + (v === sel ? ' selected' : '') + '>' + esc(labelFn(v)) + '</option>'; }).join('');
+  }
+  var countryOpts = opts(Core.COUNTRIES, function (c) { return c + ' – ' + nm(cn, c); }, 'NL');
+  var currencyOpts = opts(Core.CURRENCIES, function (c) { return c + ' – ' + nm(cu, c); }, 'EUR');
+
+  var T = {
+    addrType: { Home: 'Home (woonadres)', Postal: 'Postal (postadres)', RegisteredOffice: 'RegisteredOffice (vestigingsadres)' },
+    ptype: { Betaalrekening: 'Betaalrekening', Spaarrekening: 'Spaarrekening' },
+    status: { Active: 'Active', Frozen: 'Frozen', Discontinued: 'Discontinued' },
+    role: { AccountHolder: 'AccountHolder (rekeninghouder)', AuthorizedRepresentative: 'AuthorizedRepresentative (gemachtigde)' },
+    rel: { 'Authorized NP': 'Authorized NP', Administrator: 'Administrator', Guardian: 'Guardian' }
+  };
+  function selectOf(f, map, extra) {
+    return '<select data-f="' + f + '">' + Object.keys(map).map(function (k) { return '<option value="' + esc(k) + '">' + esc(map[k]) + '</option>'; }).join('') + '</select>';
+  }
+  function fld(label, inner, cls) { return '<div class="fld ' + (cls || '') + '"><label>' + label + '</label>' + inner + '<div class="err"></div></div>'; }
+  function txt(f, type) { return '<input data-f="' + f + '" type="' + (type || 'text') + '">'; }
+
+  function addrFields(p, typeMap) {
+    return fld('Type', selectOf(p + 'type', typeMap)) +
+      fld('Land', '<select data-f="' + p + 'country">' + countryOpts + '</select>') +
+      fld('Straat', txt(p + 'street')) + fld('Huisnummer', txt(p + 'hn')) + fld('Toevoeging', txt(p + 'suffix')) +
+      fld('Postcode', txt(p + 'pc')) + fld('Plaats', txt(p + 'city')) +
+      fld('Postbus (zonder het woord “Postbus”)', txt(p + 'pobox')) +
+      fld('Overige adresgegevens (buitenland)', txt(p + 'other')) +
+      fld('Startdatum', txt(p + 'start', 'date'));
+  }
+
+  function block(sec, title, inner) {
+    var d = document.createElement('div');
+    d.className = 'blk'; d.setAttribute('data-sec', sec);
+    d.innerHTML = '<div class="blk-h"><strong class="blk-t" data-title="' + title + '"></strong><button type="button" class="link rm">Verwijderen</button></div>' + inner;
+    return d;
+  }
+  function addAddress() {
+    $('#addresses').appendChild(block('addresses', 'Adres', '<div class="grid">' + addrFields('', T.addrType) + '</div>'));
+    refresh();
+  }
+  function addAccount() {
+    var inner = '<div class="grid">' +
+      fld('Rekening', '<select data-f="mode"><option value="new">Nieuwe rekening</option><option value="existing">Bestaande rekening</option></select>') +
+      fld('Rekeningnummer (IBAN)', txt('nr')) +
+      fld('Type', selectOf('ptype', T.ptype)) +
+      fld('Rol van de klant', selectOf('role', T.role)) +
+      fld('Relatie (gemachtigde)', selectOf('relationship', T.rel), 'ar-only') +
+      fld('Startdatum rol <span class="hint">(leeg = openingsdatum)</span>', txt('roleStart', 'date')) +
+      fld('Status', selectOf('status', T.status), 'new-only') +
+      fld('Contractpartij', '<input data-f="contract" type="text" value="KEB Hana Bank Amsterdam">', 'new-only') +
+      fld('Tenaamstelling', txt('name'), 'new-only') +
+      fld('Openingsdatum', txt('opening', 'date'), 'new-only') +
+      fld('Sluitingsdatum <span class="hint">(alleen bij Discontinued)</span>', txt('closing', 'date'), 'new-only') +
+      fld('Valuta', '<select data-f="currency">' + currencyOpts + '</select>', 'new-only') + '</div>';
+    $('#accounts').appendChild(block('accounts', 'Rekening', inner));
+    refresh();
+  }
+  function addUbo() {
+    var inner = '<div class="grid">' +
+      fld('UBO is', '<select data-f="mode"><option value="existing">Bestaande klant</option><option value="new">Nieuwe persoon</option></select>') +
+      fld('Klantnummer UBO', txt('nr')) +
+      fld('Startdatum relatie', txt('start', 'date')) + '</div>' +
+      '<div class="ubo-new"><div class="grid" style="margin-top:10px">' +
+      fld('BSN', txt('bsn')) + fld('Geboortedatum', txt('dob', 'date')) + fld('Eerste voorletter', txt('fi')) +
+      fld('Overige voorletters', txt('oi')) + fld('Voornaam', txt('fn')) + fld('Tussenvoegsel', txt('prefix')) + fld('Achternaam', txt('ln')) +
+      '</div><div class="grid" style="margin-top:10px">' + addrFields('a_', { Home: T.addrType.Home, Postal: T.addrType.Postal }) + '</div></div>';
+    $('#ubos').appendChild(block('ubos', 'UBO', inner));
+    refresh();
+  }
+
+  /* ---- zichtbaarheid en nummering ---- */
+  function val(root, f) { var e = $('[data-f="' + f + '"]', root); return e ? e.value : ''; }
+  function setHidden(el, hide) { el.classList.toggle('hide', hide); }
+  function refresh() {
+    var cust = $('[data-sec="customer"]'), le = val(cust, 'type') === 'LegalEntity';
+    $$('.np-only', cust).forEach(function (e) { setHidden(e, le); });
+    $$('.le-only', cust).forEach(function (e) { setHidden(e, !le); });
+    setHidden($('#ubo-card'), !le);
+    $$('#addresses [data-sec]').forEach(function (b) {
+      var sel = $('[data-f="type"]', b);
+      Array.prototype.forEach.call(sel.options, function (o) {
+        o.disabled = (le && o.value === 'Home') || (!le && o.value === 'RegisteredOffice');
+      });
+      if (sel.options[sel.selectedIndex].disabled) sel.value = le ? 'RegisteredOffice' : 'Home';
+    });
+    $$('#accounts [data-sec]').forEach(function (b) {
+      var isNew = val(b, 'mode') === 'new';
+      $$('.new-only', b).forEach(function (e) { setHidden(e, !isNew); });
+      var role = $('[data-f="role"]', b);
+      role.options[1].disabled = isNew;
+      if (isNew && role.value !== 'AccountHolder') role.value = 'AccountHolder';
+      $$('.ar-only', b).forEach(function (e) { setHidden(e, role.value !== 'AuthorizedRepresentative'); });
+    });
+    $$('#ubos [data-sec]').forEach(function (b) {
+      setHidden($('.ubo-new', b), val(b, 'mode') !== 'new');
+    });
+    ['addresses', 'accounts', 'ubos'].forEach(function (s) {
+      $$('#' + s + ' [data-sec]').forEach(function (b, i, all) {
+        $('.blk-t', b).textContent = $('.blk-t', b).getAttribute('data-title') + (all.length > 1 ? ' ' + (i + 1) : '');
+      });
+    });
+  }
+
+  /* ---- model uit het formulier ---- */
+  function readBlock(root) {
+    var o = {};
+    $$('[data-f]', root).forEach(function (e) { o[e.getAttribute('data-f')] = e.value; });
+    return o;
+  }
+  function readModel() {
+    var m = { db: val($('[data-sec="meta"]'), 'db'), door: val($('[data-sec="meta"]'), 'door'), customer: readBlock($('[data-sec="customer"]')) };
+    m.addresses = $$('#addresses [data-sec]').map(readBlock);
+    m.accounts = $$('#accounts [data-sec]').map(readBlock);
+    m.ubos = $$('#ubos [data-sec]').map(function (b) {
+      var o = readBlock(b), addr = {};
+      Object.keys(o).forEach(function (k) { if (k.indexOf('a_') === 0) { addr[k.slice(2)] = o[k]; delete o[k]; } });
+      o.addr = addr;
+      return o;
+    });
+    return m;
+  }
+
+  /* ---- fouten tonen ---- */
+  function findField(path) {
+    var p = path.split('.');
+    if (p.length === 1) return $('[data-sec="meta"] [data-f="' + p[0] + '"]');
+    if (p[0] === 'customer') return $('[data-sec="customer"] [data-f="' + p[1] + '"]');
+    var blocks = $$('#' + p[0] + ' [data-sec]'), b = blocks[+p[1]];
+    if (!b) return null;
+    var f = p[2] === 'addr' ? 'a_' + p[3] : p[2];
+    return $('[data-f="' + f + '"]', b);
+  }
+  function clearErrors() {
+    $$('.fld.has-err').forEach(function (f) { f.classList.remove('has-err'); });
+    $$('.fld .err').forEach(function (e) { e.textContent = ''; });
+    $$('.secerr').forEach(function (e) { e.textContent = ''; });
+    $('#summary').classList.add('hide');
+  }
+  function showErrors(errs, scroll) {
+    clearErrors();
+    var orphan = [];
+    errs.forEach(function (e) {
+      var sec = $('[data-secerr="' + e.path + '"]'), el = sec ? null : findField(e.path);
+      if (sec) { sec.textContent += (sec.textContent ? ' ' : '') + e.msg; return; }
+      if (el) {
+        var f = el.closest('.fld'), box = $('.err', f);
+        f.classList.add('has-err');
+        box.textContent += (box.textContent ? ' ' : '') + e.msg;
+      } else orphan.push(e);
+    });
+    var s = $('#summary');
+    s.classList.remove('hide');
+    s.innerHTML = '<strong>Er ' + (errs.length === 1 ? 'is 1 fout' : 'zijn ' + errs.length + ' fouten') + '.</strong> Verbeter de gemarkeerde velden.' +
+      (orphan.length ? '<ul>' + orphan.map(function (e) { return '<li>' + esc(e.msg) + '</li>'; }).join('') + '</ul>' : '');
+    var first = $('.has-err') || $('.secerr:not(:empty)');
+    if (first && scroll) first.scrollIntoView({ block: 'center' });
+  }
+
+  /* ---- uitvoer ---- */
+  function overview(rows, cols) {
+    var h = '';
+    ['Product', 'Customer', 'Address', 'Relation'].forEach(function (t) {
+      if (!rows[t].length) return;
+      var c = cols[t].filter(function (k) { return rows[t].some(function (r) { return r[k] !== null; }); });
+      h += '<h3 style="font-size:14px;margin:10px 0 4px">dbo.' + t + ' – ' + rows[t].length + ' regel' + (rows[t].length === 1 ? '' : 's') + '</h3>' +
+        '<table class="ov"><tr>' + c.map(function (k) { return '<th>' + k + '</th>'; }).join('') + '</tr>' +
+        rows[t].map(function (r) { return '<tr>' + c.map(function (k) { return '<td>' + (r[k] === null ? '' : esc(r[k])) + '</td>'; }).join('') + '</tr>'; }).join('') + '</table>';
+    });
+    return h;
+  }
+
+  function make() {
+    attempted = true;
+    var m = Core.prepare(readModel());
+    var errs = Core.validate(m, new Date());
+    if (errs.length) { showErrors(errs, true); $('#result').classList.add('hide'); last = null; return; }
+    clearErrors();
+    last = Core.generate(m, new Date());
+    var n = last.rows;
+    $('#okbar').textContent = 'Geen fouten. Er worden ' + n.Customer.length + ' klantregels, ' + n.Product.length + ' rekeningen, ' + n.Address.length + ' adressen en ' + n.Relation.length + ' UBO-relaties toegevoegd.';
+    $('#overview').innerHTML = overview(n, last.columns);
+    $('#sqltext').value = last.sql;
+    $('#copied').textContent = '';
+    $('#result').classList.remove('hide');
+    $('#result').scrollIntoView({ block: 'start' });
+  }
+
+  function download() {
+    if (!last) return;
+    var blob = new Blob(['﻿' + last.sql], { type: 'text/plain;charset=utf-8' });
+    var a = document.createElement('a');
+    a.href = URL.createObjectURL(blob); a.download = last.file;
+    document.body.appendChild(a); a.click(); a.remove();
+    setTimeout(function () { URL.revokeObjectURL(a.href); }, 2000);
+  }
+  function copy() {
+    var ta = $('#sqltext'), ok = function () { $('#copied').textContent = 'Gekopieerd.'; };
+    ta.focus(); ta.select();
+    if (navigator.clipboard && window.isSecureContext) navigator.clipboard.writeText(ta.value).then(ok, function () { document.execCommand('copy'); ok(); });
+    else { try { document.execCommand('copy'); ok(); } catch (e) { $('#copied').textContent = 'Kopiëren mislukt; selecteer de tekst en gebruik Ctrl+C.'; } }
+  }
+
+  function reset() {
+    var db = val($('[data-sec="meta"]'), 'db');
+    HTMLFormElement.prototype.reset.call(form);   // form.reset is door id="reset" overschreven
+    $('[data-f="db"]').value = db;
+    ['addresses', 'accounts', 'ubos'].forEach(function (s) { $('#' + s).innerHTML = ''; });
+    clearErrors(); attempted = false; last = null;
+    $('#result').classList.add('hide');
+    addAddress(); addAccount(); refresh();
+    window.scrollTo(0, 0);
+  }
+
+  /* ---- events ---- */
+  form.addEventListener('submit', function (e) { e.preventDefault(); make(); });
+  form.addEventListener('click', function (e) {
+    if (e.target.classList.contains('rm')) { e.target.closest('.blk').remove(); refresh(); if (attempted) make(); }
+  });
+  form.addEventListener('input', function () { refresh(); });
+  form.addEventListener('change', function (e) {
+    var el = e.target;
+    if (el.getAttribute && /(^|_)pc$/.test(el.getAttribute('data-f') || '')) {
+      var b = el.closest('[data-sec]'), pre = (el.getAttribute('data-f') || '').replace(/pc$/, '');
+      if (val(b, pre + 'country') === 'NL') el.value = el.value.toUpperCase().replace(/\s+/g, '');
+    }
+    refresh();
+    if (attempted) { var errs = Core.validate(Core.prepare(readModel()), new Date()); if (errs.length) showErrors(errs); else clearErrors(); }
+  });
+  $('#add-address').addEventListener('click', addAddress);
+  $('#add-account').addEventListener('click', addAccount);
+  $('#add-ubo').addEventListener('click', addUbo);
+  $('#reset').addEventListener('click', reset);
+  $('#download').addEventListener('click', download);
+  $('#copy').addEventListener('click', copy);
+
+  addAddress(); addAccount(); refresh();
+})();
+</script>
+</body>
+</html>

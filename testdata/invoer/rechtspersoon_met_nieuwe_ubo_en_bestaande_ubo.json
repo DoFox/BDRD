@@ -1,0 +1,71 @@
+{
+  "db": "Test_BDRC",
+  "door": "Test Medewerker",
+  "customer": {
+    "type": "LegalEntity",
+    "nr": "GEUNL01900000002",
+    "kvk": "12345678",
+    "org": "Testbedrijf B.V."
+  },
+  "addresses": [
+    {
+      "type": "RegisteredOffice",
+      "street": "Teststraat",
+      "hn": "12",
+      "suffix": "B",
+      "pc": "1234 ab",
+      "city": "Testdorp",
+      "country": "NL",
+      "pobox": "",
+      "other": "",
+      "start": "2020-01-01"
+    }
+  ],
+  "accounts": [
+    {
+      "mode": "new",
+      "nr": "NL15TEST0000000003",
+      "ptype": "Spaarrekening",
+      "role": "AccountHolder",
+      "relationship": "",
+      "roleStart": "",
+      "status": "Active",
+      "contract": "KEB Hana Bank Amsterdam",
+      "name": "Testbedrijf B.V.",
+      "opening": "2024-03-01",
+      "closing": "",
+      "currency": "USD"
+    }
+  ],
+  "ubos": [
+    {
+      "mode": "existing",
+      "nr": "GEUNL01900000010",
+      "start": "2024-03-01"
+    },
+    {
+      "mode": "new",
+      "nr": "GEUNL01900000011",
+      "start": "",
+      "bsn": "300000017",
+      "dob": "1975-12-01",
+      "fi": "M",
+      "oi": "",
+      "fn": "Marie",
+      "prefix": "",
+      "ln": "Müller-Ñoño",
+      "addr": {
+        "type": "Home",
+        "street": "",
+        "hn": "",
+        "suffix": "",
+        "pc": "",
+        "city": "München",
+        "country": "DE",
+        "pobox": "",
+        "other": "Hauptstraße 5, 80331 München",
+        "start": ""
+      }
+    }
+  ]
+}

@@ -1,0 +1,46 @@
+{
+  "db": "Test_BDRC",
+  "door": "Test Medewerker",
+  "customer": {
+    "type": "NaturalPerson",
+    "nr": "GEUNL01900000003",
+    "bsn": "200000019",
+    "dob": "1980-05-17",
+    "fi": "J",
+    "oi": "P",
+    "fn": "Jan",
+    "prefix": "van",
+    "ln": "Testman"
+  },
+  "addresses": [
+    {
+      "type": "Home",
+      "street": "Teststraat",
+      "hn": "12",
+      "suffix": "B",
+      "pc": "1234 ab",
+      "city": "Testdorp",
+      "country": "NL",
+      "pobox": "",
+      "other": "",
+      "start": "2020-01-01"
+    }
+  ],
+  "accounts": [
+    {
+      "mode": "existing",
+      "nr": "NL42TEST0000000002",
+      "ptype": "Betaalrekening",
+      "role": "AuthorizedRepresentative",
+      "relationship": "Guardian",
+      "roleStart": "2025-02-01",
+      "status": "Active",
+      "contract": "KEB Hana Bank Amsterdam",
+      "name": "J. Jansen",
+      "opening": "2024-03-01",
+      "closing": "",
+      "currency": "EUR"
+    }
+  ],
+  "ubos": []
+}
